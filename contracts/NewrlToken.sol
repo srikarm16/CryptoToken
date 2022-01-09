@@ -10,6 +10,7 @@ contract NewrlToken {
     string public name;
     uint8 public decimals;
     string public symbol;
+    address public owner;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(
@@ -20,11 +21,58 @@ contract NewrlToken {
 
     constructor() {
         totSupply = 100000000000000;
+        owner = msg.sender;
         balances[msg.sender] = totSupply;
         name = "NewrlToken";
         decimals = 1;
         symbol = "NWT";
     }
+
+    function registerAsset(address _from, uint256 _value)
+        public
+        returns (bool success)
+        {
+          if (owner != _from)
+          {
+            require(balances[owner] >= _value, "No funds available");
+            balances[owner] -= _value;
+            balances[_from] += _value;
+            emit Transfer(owner, _from, _value);
+            return true;
+          }
+          return false;
+        }
+    
+    function lenderFound(address _borrower, address _lender, uint256 _value)
+        public
+        returns (bool success) 
+        {
+          if (_borrower != _lender && _borrower != owner && _lender != owner)
+          {
+            require(balances[_borrower] >= _value, "No funds available");
+            balances[_borrower] -= _value;
+            balances[_lender] += _value;
+            emit Transfer(_borrower, _lender, _value);
+            return true;
+          }
+          return false;
+        }
+
+    function deadlineEnd(address _borrower, address _lender, uint256 _value)
+        public
+        returns (bool success)
+        {
+            if (_borrower != _lender && _borrower != owner && _lender != owner)
+            {
+                require(balances[_lender] >= _value, "No funds available");
+                balances[_lender] -= _value;
+                balances[owner] += _value;
+                emit Transfer(_lender, owner, _value);
+                return true;
+            }
+            return false;
+        }
+
 
     function transfer(address _to, uint256 _value)
         public
